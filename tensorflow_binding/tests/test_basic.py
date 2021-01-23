@@ -1,6 +1,8 @@
 import numpy as np
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 from warprnnt_tensorflow import rnnt_loss
+
+tf.compat.v1.disable_eager_execution()
 
 acts = tf.placeholder(tf.float32, [None, None, None, None])
 labels = tf.placeholder(tf.int32, [None, None])
