@@ -1,0 +1,8 @@
+build
+tensorflow_binding/build
+tensorflow_binding/dist
+tensorflow_binding/include
+*.pyc
+*.egg
+*.egg-info
+*.so

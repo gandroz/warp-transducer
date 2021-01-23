@@ -18,15 +18,18 @@ try:
 except ImportError:
     raise RuntimeError("Tensorflow must be installed to build the tensorflow wrapper.")
 
+enable_gpu = True
+
 if "CUDA_HOME" not in os.environ:
-    print("CUDA_HOME not found in the environment so building "
-          "without GPU support. To build with GPU support "
-          "please define the CUDA_HOME environment variable. "
-          "This should be a path which contains include/cuda.h",
-          file=sys.stderr)
-    enable_gpu = False
-else:
-    enable_gpu = True
+    if "CUDA_PATH" in os.environ:
+        os.environ["CUDA_HOME"] = os.environ["CUDA_PATH"]
+    else:
+        print("CUDA_HOME not found in the environment so building "
+            "without GPU support. To build with GPU support "
+            "please define the CUDA_HOME environment variable. "
+            "This should be a path which contains include/cuda.h",
+            file=sys.stderr)
+        enable_gpu = False
 
 if platform.system() == 'Darwin':
     lib_ext = ".dylib"
