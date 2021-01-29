@@ -6,3 +6,4 @@ tensorflow_binding/include
 *.egg
 *.egg-info
 *.so
+.vscode

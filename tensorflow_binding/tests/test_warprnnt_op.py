@@ -1,7 +1,11 @@
-import tensorflow as tf
+# import tensorflow as tf
+import tensorflow.compat.v1 as tf
 import numpy as np
 from warprnnt_tensorflow import rnnt_loss
 from tensorflow.python.client import device_lib
+
+
+tf.compat.v1.disable_eager_execution()
 
 def is_gpu_available():
     """Returns whether Tensorflow can access a GPU."""
@@ -17,15 +21,20 @@ class WarpRNNTTest(tf.test.TestCase):
         input_lengths_t = tf.constant(input_lengths)
         label_lengths_t = tf.constant(label_lengths)
 
-        logits = acts_t if use_gpu else tf.nn.log_softmax(acts_t)
-        costs = rnnt_loss(logits, labels_t, input_lengths_t, label_lengths_t, blank)
+        with tf.GradientTape() as tape:
+            # by default, GradientTape doesn’t track constants
+            tape.watch(acts_t)
+            tape.watch(labels_t)
+            tape.watch(input_lengths_t)
+            tape.watch(label_lengths_t)
+            logits = acts_t if use_gpu else tf.nn.log_softmax(acts_t)
+            costs = rnnt_loss(logits, labels_t, input_lengths_t, label_lengths_t, blank)
 
-        grads = tf.gradients(costs, [acts_t])[0]
+        grads = tape.gradient(costs, [acts_t])[0]
 
-        with self.test_session(use_gpu=use_gpu) as sess:
-            (tf_costs, tf_grad) = sess.run([costs, grads])
-            self.assertAllClose(tf_costs, expected_costs, atol=1e-6)
-            self.assertAllClose(tf_grad, expected_grads, atol=1e-6)
+        self.assertAllClose(costs, expected_costs, atol=1e-6)
+        self.assertAllClose(grads, expected_grads, atol=1e-6)
+            
     
     def test_forward(self):
         # Softmax activations for the following inputs:
