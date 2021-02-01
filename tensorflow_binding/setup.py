@@ -31,6 +31,12 @@ if "CUDA_HOME" not in os.environ:
             file=sys.stderr)
         enable_gpu = False
 
+print("\n")
+print("\n")
+print(f"GPU enabled: {enable_gpu}")
+print("\n")
+print("\n")
+
 if platform.system() == 'Darwin':
     lib_ext = ".dylib"
 else:

@@ -1,18 +1,17 @@
-# import tensorflow as tf
-import tensorflow.compat.v1 as tf
+import os
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
+import tensorflow as tf
 import numpy as np
 from warprnnt_tensorflow import rnnt_loss
 from tensorflow.python.client import device_lib
 
-
-tf.compat.v1.disable_eager_execution()
 
 def is_gpu_available():
     """Returns whether Tensorflow can access a GPU."""
     return any(x.device_type == 'GPU' for x in device_lib.list_local_devices())
 
 class WarpRNNTTest(tf.test.TestCase):
-
+    
     def _run_rnnt(self, acts, labels, input_lengths, label_lengths,
                     expected_costs, expected_grads, blank, use_gpu=False):
         self.assertEquals(acts.shape, expected_grads.shape)
@@ -31,11 +30,9 @@ class WarpRNNTTest(tf.test.TestCase):
             costs = rnnt_loss(logits, labels_t, input_lengths_t, label_lengths_t, blank)
 
         grads = tape.gradient(costs, [acts_t])[0]
-
         self.assertAllClose(costs, expected_costs, atol=1e-6)
         self.assertAllClose(grads, expected_grads, atol=1e-6)
-            
-    
+
     def test_forward(self):
         # Softmax activations for the following inputs:
         acts = np.array([0.1, 0.6, 0.1, 0.1, 0.1, 0.1, 
@@ -43,6 +40,8 @@ class WarpRNNTTest(tf.test.TestCase):
                         0.2, 0.8, 0.1, 0.1, 0.6, 0.1, 
                         0.1, 0.1, 0.1, 0.1, 0.2, 0.1, 
                         0.1, 0.7, 0.1, 0.2, 0.1, 0.1], dtype=np.float32).reshape(1, 2, 3, 5)
+
+        expected_costs = np.array([4.495667], dtype=np.float32)
 
         labels = np.array([[1, 2]], dtype=np.int32)
         input_lengths = np.array([2], dtype=np.int32)
@@ -54,8 +53,7 @@ class WarpRNNTTest(tf.test.TestCase):
         label_lengths_t = tf.constant(label_lengths)
         acts_t = tf.nn.log_softmax(acts_t) # NOTE cpu
         costs = rnnt_loss(acts_t, labels_t, input_lengths_t, label_lengths_t)
-        with self.test_session():
-            print(costs.eval())
+        self.assertAllClose(costs, expected_costs, atol=1e-6)
 
     def _test_multiple_batches(self, use_gpu):
         B = 2; T = 4; U = 3; V = 3

@@ -1,19 +1,9 @@
+import os
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 import numpy as np
-import tensorflow.compat.v1 as tf
+import tensorflow as tf
 from warprnnt_tensorflow import rnnt_loss
 
-tf.compat.v1.disable_eager_execution()
-
-acts = tf.placeholder(tf.float32, [None, None, None, None])
-labels = tf.placeholder(tf.int32, [None, None])
-input_length = tf.placeholder(tf.int32, [None])
-label_length = tf.placeholder(tf.int32, [None])
-
-B = 2; T = 4; U = 3; V = 3; blank = 0
-
-logits = tf.nn.log_softmax(acts)
-costs = rnnt_loss(logits, labels, input_length, label_length, blank)
-grad = tf.gradients(costs, [acts])
 
 a = np.array([[[[0.06535690384862791, 0.7875301411923206, 0.08159176605666074],
             [0.5297155426466327, 0.7506749639230854, 0.7541348379087998],
@@ -51,8 +41,19 @@ b = np.array([[1, 2], [1, 1]], dtype=np.int32)
 c = np.array([4, 4], dtype=np.int32)
 d = np.array([2, 2], dtype=np.int32)
 
-feed = {acts: a, labels: b, input_length: c, label_length: d}
-with tf.Session() as sess:
-    cost, grads = sess.run([costs, grad], feed_dict=feed)
-    print(cost)
-    print(grads)
+logits = tf.constant(a)
+labels = tf.constant(b)
+input_lengths = tf.constant(c)
+label_lengths = tf.constant(d)
+
+with tf.GradientTape() as tape:
+    # by default, GradientTape doesn’t track constants
+    tape.watch(logits)
+    tape.watch(labels)
+    tape.watch(input_lengths)
+    tape.watch(label_lengths)
+    costs = rnnt_loss(logits, labels, input_lengths, label_lengths)
+
+grads = tape.gradient(costs, [logits])[0]
+print(costs)
+print(grads)

@@ -44,6 +44,10 @@ your current Python environment:
 CUDA=/path/to/cuda python setup.py install
 ```
 
+***ATTENTION***
+Be sure to remove `build`, `dist` and `include` directories in the `tensorflow_binding` folder
+before installing as the installation may keep an old compiled version of the kernels library.
+
 You can run a few unit tests with `setup.py` as well if you want:
 
 ```bash
